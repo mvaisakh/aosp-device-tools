@@ -41,7 +41,7 @@ cat > device/$1/$2/statix_$2.mk << EOF
 
 PRODUCT_NAME := statix_$2
 PRODUCT_DEVICE := $2
-PRODUCT_BRAND := Android
+PRODUCT_BRAND := $1
 PRODUCT_MODEL := $2
 PRODUCT_MANUFACTURER := $1
 EOF

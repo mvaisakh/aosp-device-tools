@@ -74,6 +74,8 @@ cat > device/$1/$2/BoardConfig.mk << EOF
 # SPDX-License-Identifier: Apache-2.0
 # 
 
+DEVICE_PATH := device/$1/$2
+
 # Use the non-open-source parts, if they're present
 -include vendor/$1/$2/BoardConfigVendor.mk
 

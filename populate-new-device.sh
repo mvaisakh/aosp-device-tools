@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Copyright 2014 The Android Open Source Project
-# Copyright 2024 StatiXOS
+# Copyright (c) 2014 The Android Open Source Project
+# Copyright (c) 2024 StatiXOS
 #
 # SPDX-License-Identifier: Apache-2.0
 # 
@@ -18,8 +18,8 @@ mkdir -p vendor/$1/$2
 
 cat > device/$1/$2/AndroidProducts.mk << EOF
 #
-# Copyright 2014 The Android Open-Source Project
-# Copyright 2024 StatiXOS
+# Copyright (c) 2014 The Android Open-Source Project
+# Copyright (c) 2024 StatiXOS
 #
 # SPDX-License-Identifier: Apache-2.0
 # 
@@ -31,8 +31,8 @@ EOF
 
 cat > device/$1/$2/statix_$2.mk << EOF
 #
-# Copyright 2014 The Android Open-Source Project
-# Copyright 2024 StatiXOS
+# Copyright (c) 2014 The Android Open-Source Project
+# Copyright (c) 2024 StatiXOS
 #
 # SPDX-License-Identifier: Apache-2.0
 # 
@@ -48,8 +48,8 @@ EOF
 
 cat > device/$1/$2/device.mk << EOF
 #
-# Copyright 2014 The Android Open-Source Project
-# Copyright 2024 StatiXOS
+# Copyright (c) 2014 The Android Open-Source Project
+# Copyright (c) 2024 StatiXOS
 #
 # SPDX-License-Identifier: Apache-2.0
 # 
@@ -68,8 +68,8 @@ EOF
 
 cat > device/$1/$2/BoardConfig.mk << EOF
 #
-# Copyright 2014 The Android Open-Source Project
-# Copyright 2024 StatiXOS
+# Copyright (c) 2014 The Android Open-Source Project
+# Copyright (c) 2024 StatiXOS
 #
 # SPDX-License-Identifier: Apache-2.0
 # 
@@ -93,8 +93,8 @@ touch device/$1/$2-kernel/MODULE_LICENSE_GPL
 
 cat > vendor/$1/$2/device-vendor.mk << EOF
 #
-# Copyright 2014 The Android Open-Source Project
-# Copyright 2024 StatiXOS
+# Copyright (c) 2014 The Android Open-Source Project
+# Copyright (c) 2024 StatiXOS
 #
 # SPDX-License-Identifier: Apache-2.0
 # 
@@ -102,8 +102,8 @@ EOF
 
 cat > vendor/$1/$2/BoardConfigVendor.mk << EOF
 #
-# Copyright 2014 The Android Open-Source Project
-# Copyright 2024 StatiXOS
+# Copyright (c) 2014 The Android Open-Source Project
+# Copyright (c) 2024 StatiXOS
 #
 # SPDX-License-Identifier: Apache-2.0
 # 

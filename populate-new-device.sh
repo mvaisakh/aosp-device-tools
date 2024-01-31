@@ -26,7 +26,7 @@ cat > device/$1/$2/AndroidProducts.mk << EOF
 
 PRODUCT_MAKEFILES := \$(LOCAL_DIR)/statix_$2.mk
 
-COMMON_LUNCH_CHOICES := statix_$2-userdebug
+COMMON_LUNCH_CHOICES := statix_$2-user
 EOF
 
 cat > device/$1/$2/statix_$2.mk << EOF

@@ -60,7 +60,7 @@ else
 LOCAL_KERNEL := \$(TARGET_PREBUILT_KERNEL)
 endif
 
-PRODUCT_COPY_FILES := \\
+PRODUCT_COPY_FILES += \\
     \$(LOCAL_KERNEL):kernel
 
 \$(call inherit-product-if-exists, vendor/$1/$2/device-vendor.mk)

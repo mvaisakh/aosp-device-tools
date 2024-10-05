@@ -63,7 +63,7 @@ endif
 PRODUCT_COPY_FILES += \\
     \$(LOCAL_KERNEL):kernel
 
-\$(call inherit-product-if-exists, vendor/$1/$2/device-vendor.mk)
+\$(call inherit-product-if-exists, vendor/$1/$2/$2-vendor.mk)
 EOF
 
 cat > device/$1/$2/BoardConfig.mk << EOF
@@ -93,7 +93,7 @@ EOF
 touch device/$1/$2-kernel/kernel
 touch device/$1/$2-kernel/MODULE_LICENSE_GPL
 
-cat > vendor/$1/$2/device-vendor.mk << EOF
+cat > vendor/$1/$2/$2-vendor.mk << EOF
 #
 # Copyright (c) 2014 The Android Open-Source Project
 # Copyright (c) 2024 StatiXOS

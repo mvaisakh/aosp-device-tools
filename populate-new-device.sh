@@ -4,7 +4,7 @@
 # Copyright (c) 2024 StatiXOS
 #
 # SPDX-License-Identifier: Apache-2.0
-# 
+#
 
 if test "$1" = "" -o "$2" = ""
 then
@@ -22,7 +22,7 @@ cat > device/$1/$2/AndroidProducts.mk << EOF
 # Copyright (c) 2024 StatiXOS
 #
 # SPDX-License-Identifier: Apache-2.0
-# 
+#
 
 PRODUCT_MAKEFILES := \$(LOCAL_DIR)/statix_$2.mk
 
@@ -35,7 +35,7 @@ cat > device/$1/$2/statix_$2.mk << EOF
 # Copyright (c) 2024 StatiXOS
 #
 # SPDX-License-Identifier: Apache-2.0
-# 
+#
 \$(call inherit-product, \$(SRC_TARGET_DIR)/product/full_base.mk)
 \$(call inherit-product, device/$1/$2/device.mk)
 
@@ -52,7 +52,7 @@ cat > device/$1/$2/device.mk << EOF
 # Copyright (c) 2024 StatiXOS
 #
 # SPDX-License-Identifier: Apache-2.0
-# 
+#
 
 ifeq (\$(TARGET_PREBUILT_KERNEL),)
 LOCAL_KERNEL := device/$1/$2-kernel/kernel
@@ -72,7 +72,7 @@ cat > device/$1/$2/BoardConfig.mk << EOF
 # Copyright (c) 2024 StatiXOS
 #
 # SPDX-License-Identifier: Apache-2.0
-# 
+#
 
 DEVICE_PATH := device/$1/$2
 
@@ -99,7 +99,7 @@ cat > vendor/$1/$2/$2-vendor.mk << EOF
 # Copyright (c) 2024 StatiXOS
 #
 # SPDX-License-Identifier: Apache-2.0
-# 
+#
 EOF
 
 cat > vendor/$1/$2/BoardConfigVendor.mk << EOF
@@ -108,6 +108,9 @@ cat > vendor/$1/$2/BoardConfigVendor.mk << EOF
 # Copyright (c) 2024 StatiXOS
 #
 # SPDX-License-Identifier: Apache-2.0
-# 
+#
 EOF
 
+cat > device/$1/$2/board-info.txt << EOF
+require=$2
+EOF

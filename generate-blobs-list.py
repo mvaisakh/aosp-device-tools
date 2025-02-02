@@ -16,19 +16,19 @@ PARTITION_MAPPING = {
 
 # --- Helper Functions ---
 
-def find_file_in_aosp(file_name_and_aosp_root):
+def find_file_in_aosp(module_name_and_aosp_root):
     """
-    Uses mgrep to find if ANY file with the given name exists in AOSP.
+    Uses mgrep to find if ANY file with the given name (without extension) exists in AOSP.
     Returns True if found, False otherwise.
     """
-    file_name, aosp_root = file_name_and_aosp_root  # Unpack arguments
+    module_name, aosp_root = module_name_and_aosp_root  # Unpack arguments
 
     # Search using mgrep (case-insensitive)
-    mgrep_command = ["mgrep", "-i", "-r", file_name] 
+    mgrep_command = ["mgrep", "-i", "-r", module_name]
     try:
         mgrep_result = subprocess.run(mgrep_command, capture_output=True, text=True, check=False, cwd=aosp_root)
         if mgrep_result.returncode == 0:
-            print(f"Found {file_name} in AOSP using mgrep")
+            print(f"Found {module_name} in AOSP using mgrep")
             return True
     except subprocess.CalledProcessError as e:
         print(f"Error running mgrep: {e}")
@@ -52,32 +52,50 @@ def get_partition_from_path(file_path):
 def process_stock_file(stock_file_and_aosp_root):
     """
     Processes a single stock file.
+    Returns:
+        A tuple: (entry_for_proprietary_files, entry_for_interfaces_mk)
+        If the file should be skipped, both entries will be None.
+        If the file is proprietary, the first entry will be the formatted string for proprietary-files.txt, and the second will be None.
+        If the file is an "android.hardware" file, the second entry will be the formatted string for interfaces.mk, and the first will be None.
     """
     stock_file, aosp_root = stock_file_and_aosp_root  # Unpack arguments
     stock_file_name = os.path.basename(stock_file)
     stock_file_partition = get_partition_from_path(stock_file)
 
     # Apply Exclusions:
-    if stock_file_name.endswith((".vdex", ".odex", ".apex", ".wav", ".ogg", ".txt")):
+    if stock_file_name.endswith((".vdex", ".odex", ".apex", ".wav", ".ogg", ".txt", ".jpg", ".png")):
         print(f"  Skipping excluded file type: {stock_file_name}")
-        return None
+        return None, None
 
     if stock_file_partition in ["product", "system"]:
         print(f"  Skipping file from product/system partition: {stock_file_name}")
-        return None
+        return None, None
 
-    # Check if the file exists in AOSP using a broader mgrep search
-    if not find_file_in_aosp((stock_file_name, aosp_root)):
+    if stock_file_name.endswith(".img") and stock_file_partition not in ["vendor", "odm"]:
+        print(f"  Skipping .img file from invalid partition: {stock_file_name}")
+        return None, None
+    
+    # Check for "android.hardware" files
+    if stock_file_name.startswith("android.hardware"):
+        print(f"  Found android.hardware file: {stock_file_name}")
+        module_name = stock_file_name.removesuffix(".so").removesuffix(".ko").removesuffix(".apk").removesuffix(".xml").removesuffix(".img")
+        if stock_file_partition == "vendor":
+            module_name += ".vendor"
+        return None, f"    {module_name} \\"
+
+    # Check if the file exists in AOSP using a broader mgrep search (without extension)
+    module_name = stock_file_name.removesuffix(".so").removesuffix(".ko").removesuffix(".apk").removesuffix(".xml").removesuffix(".img")
+    if not find_file_in_aosp((module_name, aosp_root)):
         print(f"  {stock_file_name} NOT found in AOSP source.")
-        return f"-{stock_file}"
+        return f"-{stock_file}", None
     else:
         print(f"  {stock_file_name} found in AOSP source. Skipping.")
-        return None
+        return None, None
 
 # --- Main Script ---
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate proprietary-files.txt for LineageOS device bringup.")
+    parser = argparse.ArgumentParser(description="Generate proprietary-files.txt and interfaces.mk for LineageOS device bringup.")
     parser.add_argument("codename", help="Device codename")
     parser.add_argument("aosp_root", help="Path to AOSP root directory")
     parser.add_argument("-f", "--files", default="all_files.txt", help="Path to the list of all stock firmware files (default: all_files.txt)")
@@ -87,6 +105,7 @@ def main():
     device_codename = args.codename
     aosp_root = args.aosp_root
     output_file = "proprietary-files.txt"
+    interfaces_mk_file = "interfaces.mk"
 
     if not os.path.exists(aosp_root) or not os.path.exists(stock_firmware_files_list):
         print("Error: AOSP root directory or all_files.txt does not exist.")
@@ -109,8 +128,14 @@ def main():
     with Pool(processes=num_processes) as pool:
         results = pool.map(process_stock_file, process_args)
 
-    # Filter out None results
-    proprietary_files = [r for r in results if r is not None]
+    # Filter out None results and separate proprietary files and interface entries
+    proprietary_files = []
+    interface_entries = []
+    for result in results:
+        if result[0] is not None:
+            proprietary_files.append(result[0])
+        if result[1] is not None:
+            interface_entries.append(result[1])
 
     # Write the proprietary-files.txt
     with open(output_file, "w") as f:
@@ -125,7 +150,15 @@ def main():
                 current_partition = partition
             f.write(line + "\n")
 
-    print(f"\nGenerated {output_file} for use with extract-files.sh")
+    # Write the interfaces.mk
+    with open(interfaces_mk_file, "w") as f:
+        f.write("# This file is generated by a script. Do not modify manually.\n")
+        f.write(f"# Device: {device_codename}\n\n")
+        f.write("PRODUCT_PACKAGES += \\\n")
+        for entry in interface_entries:
+            f.write(entry + "\n")
+
+    print(f"\nGenerated {output_file} and {interfaces_mk_file} for use with extract-files.sh")
 
 if __name__ == "__main__":
     main()

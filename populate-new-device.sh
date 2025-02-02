@@ -39,6 +39,9 @@ cat > device/$1/$2/statix_$2.mk << EOF
 \$(call inherit-product, \$(SRC_TARGET_DIR)/product/full_base.mk)
 \$(call inherit-product, device/$1/$2/device.mk)
 
+# Inherit some common StatiX stuff.
+$(call inherit-product, vendor/statix/config/common.mk)
+
 PRODUCT_NAME := statix_$2
 PRODUCT_DEVICE := $2
 PRODUCT_BRAND := $1

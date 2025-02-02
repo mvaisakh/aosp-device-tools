@@ -47,6 +47,11 @@ def get_partition_from_path(file_path):
         for prefix in path_prefixes:
             if file_path.startswith(prefix + "/"):
                 return partition
+
+    # Check for dlkm partitions
+    if "_dlkm" in file_path:
+        return "dlkm"
+
     return "unknown"
 
 def process_stock_file(stock_file_and_aosp_root):
@@ -54,27 +59,35 @@ def process_stock_file(stock_file_and_aosp_root):
     Processes a single stock file.
     Returns:
         A tuple: (entry_for_proprietary_files, entry_for_interfaces_mk)
-        If the file should be skipped, both entries will be None.
-        If the file is proprietary, the first entry will be the formatted string for proprietary-files.txt, and the second will be None.
-        If the file is an "android.hardware" file, the second entry will be the formatted string for interfaces.mk, and the first will be None.
     """
     stock_file, aosp_root = stock_file_and_aosp_root  # Unpack arguments
     stock_file_name = os.path.basename(stock_file)
     stock_file_partition = get_partition_from_path(stock_file)
 
+    # Convert to lower case for case-insensitive comparisons
+    stock_file_lower = stock_file.lower()
+
     # Apply Exclusions:
-    if stock_file_name.endswith((".vdex", ".odex", ".apex", ".wav", ".ogg", ".txt", ".jpg", ".png")):
+    if stock_file_name.endswith((".vdex", ".odex", ".apex", ".wav", ".ogg", ".txt", ".jpg", ".png", ".gz")):
         print(f"  Skipping excluded file type: {stock_file_name}")
         return None, None
 
-    if stock_file_partition in ["product", "system"]:
-        print(f"  Skipping file from product/system partition: {stock_file_name}")
+    if stock_file_partition in ["product", "system"] or stock_file_partition == "dlkm":
+        print(f"  Skipping file from product/system/dlkm partition: {stock_file_name}")
         return None, None
-
+    
     if stock_file_name.endswith(".img") and stock_file_partition not in ["vendor", "odm"]:
         print(f"  Skipping .img file from invalid partition: {stock_file_name}")
         return None, None
-    
+
+    if "overlay" in stock_file_lower:
+        print(f"  Skipping file containing 'overlay': {stock_file_name}")
+        return None, None
+
+    if any(d.endswith("/selinux") for d in stock_file.split(os.sep)):
+        print(f"  Skipping file from selinux directory: {stock_file_name}")
+        return None, None
+
     # Check for "android.hardware" files
     if stock_file_name.startswith("android.hardware"):
         print(f"  Found android.hardware file: {stock_file_name}")
@@ -87,7 +100,7 @@ def process_stock_file(stock_file_and_aosp_root):
     module_name = stock_file_name.removesuffix(".so").removesuffix(".ko").removesuffix(".apk").removesuffix(".xml").removesuffix(".img")
     if not find_file_in_aosp((module_name, aosp_root)):
         print(f"  {stock_file_name} NOT found in AOSP source.")
-        return f"-{stock_file}", None
+        return stock_file, None  # No leading hyphen
     else:
         print(f"  {stock_file_name} found in AOSP source. Skipping.")
         return None, None
@@ -144,7 +157,7 @@ def main():
 
         current_partition = ""
         for line in proprietary_files:
-            partition = line.split("/")[0].lstrip("-")
+            partition = get_partition_from_path(line)
             if partition != current_partition:
                 f.write(f"\n# {partition}\n")
                 current_partition = partition

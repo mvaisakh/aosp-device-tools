@@ -16,19 +16,19 @@ PARTITION_MAPPING = {
 
 # --- Helper Functions ---
 
-def find_module_in_aosp(module_name_and_aosp_root):
+def find_file_in_aosp(file_name_and_aosp_root):
     """
-    Uses mgrep and find/egrep to find if a module is defined in AOSP.
+    Uses mgrep to find if ANY file with the given name exists in AOSP.
     Returns True if found, False otherwise.
     """
-    module_name, aosp_root = module_name_and_aosp_root  # Unpack arguments
+    file_name, aosp_root = file_name_and_aosp_root  # Unpack arguments
 
-    # Search in Android.mk files using mgrep
-    mgrep_command = ["mgrep", "-i", "-r", f"LOCAL_MODULE[[:space:]]*:=[[:space:]]*{module_name}"]
+    # Search using mgrep (case-insensitive)
+    mgrep_command = ["mgrep", "-i", "-r", file_name] 
     try:
         mgrep_result = subprocess.run(mgrep_command, capture_output=True, text=True, check=False, cwd=aosp_root)
         if mgrep_result.returncode == 0:
-            print(f"Found {module_name} in AOSP using mgrep")
+            print(f"Found {file_name} in AOSP using mgrep")
             return True
     except subprocess.CalledProcessError as e:
         print(f"Error running mgrep: {e}")
@@ -37,25 +37,7 @@ def find_module_in_aosp(module_name_and_aosp_root):
         print("Error: mgrep not found. Make sure it is available in your environment.")
         return False
 
-    # Search in Android.bp files using find and egrep
-    find_command = [
-        "find", aosp_root, "-name", "*.bp", "-print0",
-        "|", "xargs", "-0", "egrep", "-i", f"name:[[:space:]]*\"{module_name}\""
-    ]
-
-    try:
-        find_result = subprocess.run([' '.join(find_command)], capture_output=True, text=True, check=False, shell=True, cwd=aosp_root)
-        if find_result.returncode == 0:
-            print(f"Found {module_name} in AOSP using find/egrep")
-            return True
-    except subprocess.CalledProcessError as e:
-        print(f"Error running find/egrep: {e}")
-        return False
-    except FileNotFoundError:
-        print("Error: find or egrep not found. Please ensure they are installed.")
-        return False
-
-    return False  # Module not found
+    return False  # File not found
 
 def get_partition_from_path(file_path):
     """
@@ -76,17 +58,16 @@ def process_stock_file(stock_file_and_aosp_root):
     stock_file_partition = get_partition_from_path(stock_file)
 
     # Apply Exclusions:
-    if stock_file_name.endswith((".vdex", ".odex")):
-        print(f"  Skipping .vdex/.odex file: {stock_file_name}")
+    if stock_file_name.endswith((".vdex", ".odex", ".apex", ".wav", ".ogg", ".txt")):
+        print(f"  Skipping excluded file type: {stock_file_name}")
         return None
 
     if stock_file_partition in ["product", "system"]:
         print(f"  Skipping file from product/system partition: {stock_file_name}")
         return None
 
-    # Check if the file exists in AOSP
-    module_name = stock_file_name.removesuffix(".so").removesuffix(".ko")
-    if not find_module_in_aosp((module_name, aosp_root)):
+    # Check if the file exists in AOSP using a broader mgrep search
+    if not find_file_in_aosp((stock_file_name, aosp_root)):
         print(f"  {stock_file_name} NOT found in AOSP source.")
         return f"-{stock_file}"
     else:
